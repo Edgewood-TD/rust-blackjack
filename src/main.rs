@@ -49,30 +49,28 @@ impl Deck {
         }
         println!("{}", self.cards.len().to_string());
     }
-    pub fn deal(&mut self, player: &mut Player) {
+    pub fn deal(&mut self, hand: &mut Hand) {
         let card = self.cards.pop().unwrap();
 
-        player.hand.push(card.clone());
-        println!("{} got {:?}", player.name, card.clone());
+        hand.cards.push(card.clone());
+        println!("{} got {:?}", hand.name, card.clone());
     }
 }
 #[derive(Debug)]
-pub struct Player {
+pub struct Hand {
     pub name: String,
-    pub hand: Vec<Card>,
-    pub balance: i32,
+    pub cards: Vec<Card>,
 }
-impl Player {
-    pub fn new_player(name: String) -> Self {
-        Player {
+impl Hand {
+    pub fn new_hand(name: String) -> Self {
+        Hand {
             name: name,
-            hand: Vec::new(),
-            balance: 10000,
+            cards: Vec::new(),
         }
     }
     pub fn points(&self) -> u32 {
         let allnum: Vec<u32> = self
-            .hand
+            .cards
             .iter()
             .map(|card| cmp::min(10, card.number) as u32)
             .collect();
@@ -97,8 +95,8 @@ fn main() {
 }
 
 fn play_game() {
-    let ref mut player_a: Player = Player::new_player("player".to_string());
-    let ref mut dealer: Player = Player::new_player("Dealer".to_string());
+    let ref mut player_a: Hand = Hand::new_hand("player".to_string());
+    let ref mut dealer: Hand = Hand::new_hand("Dealer".to_string());
     let ref mut deck = Deck::new_deck();
     deck.deal(player_a);
     deck.deal(dealer);
@@ -128,21 +126,24 @@ fn play_game() {
             return;
         }
     }
-
+    println!("======Dealer Getting Cards======");
     while dealer.points() <= 16 {
         deck.deal(dealer);
         println!("Dealer have {} points", dealer.points());
     }
+    println!("===========Result=============");
     if dealer.points() > 21 {
-        println!("Dealer have {} points", player_a.points());
+        println!("Dealer have {} points", dealer.points());
+        println!("You have {} points", player_a.points());
         println!("You Won!");
         return;
+    } else {
+        println!("You have {} points", player_a.points());
+        println!("Dealer have {} points", dealer.points());
+        match player_a.points() > dealer.points() {
+            true => println!("You Won!"),
+            false => println!("You Lost!"),
+        }
     }
-    println!("===========Result=============");
-    println!("You have {} points", player_a.points());
-    println!("Dealer have {} points", dealer.points());
-    match player_a.points() > dealer.points() {
-        true => println!("You Won!"),
-        false => println!("You Lost!"),
-    }
+    println!("=============================");
 }
