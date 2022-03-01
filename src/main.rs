@@ -92,9 +92,8 @@ fn main() {
         println!("You Won!");
         return;
     }
-    let mut busted = false;
     let mut stand = false;
-    while !busted || !stand {
+    loop {
         println!("You have {} points", player_a.points());
         println!("Dealer have {} points", dealer.points());
         println!("Want more cards?");
