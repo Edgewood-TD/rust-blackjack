@@ -80,6 +80,23 @@ impl Player {
     }
 }
 fn main() {
+    loop {
+        println!("Enter s to start , e to exit");
+        let mut input = String::new();
+        match io::stdin().read_line(&mut input) {
+            Ok(_) => match input.trim() {
+                "s" => play_game(),
+                "e" => break,
+                _ => {
+                    continue;
+                }
+            },
+            Err(error) => println!("error: {}", error),
+        }
+    }
+}
+
+fn play_game() {
     let ref mut player_a: Player = Player::new_player("player".to_string());
     let ref mut dealer: Player = Player::new_player("Dealer".to_string());
     let ref mut deck = Deck::new_deck();
@@ -87,11 +104,6 @@ fn main() {
     deck.deal(dealer);
     deck.deal(player_a);
     deck.deal(dealer);
-    if dealer.points() > 21 {
-        println!("Dealer have {} points", player_a.points());
-        println!("You Won!");
-        return;
-    }
 
     loop {
         println!("You have {} points", player_a.points());
@@ -116,11 +128,7 @@ fn main() {
             return;
         }
     }
-    if dealer.points() > 21 {
-        println!("Dealer have {} points", player_a.points());
-        println!("You Won!");
-        return;
-    }
+
     while dealer.points() <= 16 {
         deck.deal(dealer);
         println!("Dealer have {} points", dealer.points());
@@ -130,6 +138,7 @@ fn main() {
         println!("You Won!");
         return;
     }
+    println!("===========Result=============");
     println!("You have {} points", player_a.points());
     println!("Dealer have {} points", dealer.points());
     match player_a.points() > dealer.points() {
