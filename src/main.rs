@@ -92,19 +92,21 @@ fn main() {
         println!("You Won!");
         return;
     }
-    let mut stand = false;
+
     loop {
         println!("You have {} points", player_a.points());
         println!("Dealer have {} points", dealer.points());
-        println!("Want more cards?");
+        println!("Want more cards? (y,n)");
         let mut input = String::new();
         match io::stdin().read_line(&mut input) {
-            Ok(n) => match input.trim() {
+            Ok(_n) => match input.trim() {
                 "y" => {
                     deck.deal(player_a);
                 }
                 "n" => break,
-                _ => stand = true,
+                _ => {
+                    continue;
+                }
             },
             Err(error) => println!("error: {}", error),
         }
