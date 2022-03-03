@@ -53,97 +53,155 @@ impl Deck {
         let card = self.cards.pop().unwrap();
 
         hand.cards.push(card.clone());
-        println!("{} got {:?}", hand.name, card.clone());
+        println!(" got {:?}", card.clone());
+    }
+}
+#[derive(Debug)]
+pub struct Player {
+    pub name: String,
+    pub current_hand: Hand,
+    pub balance: u32,
+}
+impl Player {
+    pub fn new(_name: String) -> Self {
+        Player {
+            name: _name,
+            current_hand: Hand::new_hand(),
+            balance: 10000,
+        }
+    }
+    pub fn add(&mut self, b: u32) {
+        self.balance += b;
+    }
+    pub fn sub(&mut self, b: u32) {
+        self.balance -= b;
+    }
+}
+pub struct Game {
+    pub dealer: Player,
+    pub player: Player,
+}
+impl Game {
+    pub fn new<'a>(player: Player) -> Self {
+        Game {
+            player,
+            dealer: Player::new("Dealer".to_string()),
+        }
+    }
+
+    pub fn start_game(&mut self) -> Option<&Player> {
+        let ref mut deck = Deck::new_deck();
+        deck.deal(&mut self.dealer.current_hand);
+        deck.deal(&mut self.player.current_hand);
+        deck.deal(&mut self.dealer.current_hand);
+        deck.deal(&mut self.player.current_hand);
+        loop {
+            self.display_point();
+            println!("Want more cards? (y,n)");
+            let mut input = String::new();
+            match io::stdin().read_line(&mut input) {
+                Ok(_n) => match input.trim() {
+                    "y" => {
+                        deck.deal(&mut self.player.current_hand);
+                    }
+                    "n" => break,
+                    _ => {
+                        continue;
+                    }
+                },
+                Err(error) => println!("error: {}", error),
+            }
+            if &self.player.current_hand.points() > &21 {
+                println!("You have {} points", &self.player.current_hand.points());
+                println!("You busted!");
+                return Some(&self.dealer);
+            }
+        }
+        println!("===========Result=============");
+        if let Some(_) = self.dealer_turn(deck) {
+            self.display_point();
+            println!("Player Win!");
+            println!("=============================");
+            return Some(&self.player);
+        } else {
+            self.display_point();
+            println!("Dealer Win!");
+            println!("=============================");
+            return Some(&self.dealer);
+        }
+    }
+    fn dealer_turn(&mut self, deck: &mut Deck) -> Option<&Player> {
+        println!("======Dealer Getting Cards======");
+        while &self.dealer.current_hand.points() <= &16 {
+            let _ = &mut deck.deal(&mut self.dealer.current_hand);
+            println!(
+                "Dealer have {} points",
+                &mut self.dealer.current_hand.points()
+            );
+        }
+        if &self.dealer.current_hand.points() > &21 {
+            println!("Dealer have {} points", &self.dealer.current_hand.points());
+            println!("You have {} points", &self.player.current_hand.points());
+            println!("You Won!");
+            return Some(&self.player);
+        } else {
+            None
+        }
+    }
+    fn display_point(&self) {
+        println!("You have {} points", self.player.current_hand.points());
+        println!("Dealer have {} points", self.dealer.current_hand.points());
     }
 }
 #[derive(Debug)]
 pub struct Hand {
-    pub name: String,
     pub cards: Vec<Card>,
 }
 impl Hand {
-    pub fn new_hand(name: String) -> Self {
-        Hand {
-            name: name,
-            cards: Vec::new(),
-        }
+    pub fn new_hand() -> Self {
+        Hand { cards: Vec::new() }
     }
     pub fn points(&self) -> u32 {
-        let allnum: Vec<u32> = self
+        let all_num: Vec<u32> = self
             .cards
             .iter()
             .map(|card| cmp::min(10, card.number) as u32)
             .collect();
-        allnum.iter().sum()
+        all_num.iter().sum()
     }
 }
 fn main() {
     loop {
-        println!("Enter s to start , e to exit");
+        println!("Enter your bet to start , or e to exit");
         let mut input = String::new();
+        let player = Player::new("Eric".to_string());
+        let mut game = Game::new(player);
         match io::stdin().read_line(&mut input) {
-            Ok(_) => match input.trim() {
-                "s" => play_game(),
-                "e" => break,
+            Ok(_) => match input.trim().parse::<u32>() {
+                Ok(ok) => {
+                    if let Some(winner) = game.start_game() {
+                        match winner {
+                            player => {}
+                            _ => {}
+                        }
+                    }
+                }
                 _ => {
-                    continue;
+                    break;
                 }
             },
-            Err(error) => println!("error: {}", error),
+            Err(error) => {
+                println!("error: {}", error);
+                ()
+            }
         }
     }
 }
 
-fn play_game() {
-    let ref mut player_a: Hand = Hand::new_hand("player".to_string());
-    let ref mut dealer: Hand = Hand::new_hand("Dealer".to_string());
-    let ref mut deck = Deck::new_deck();
-    deck.deal(player_a);
-    deck.deal(dealer);
-    deck.deal(player_a);
-    deck.deal(dealer);
-
-    loop {
-        println!("You have {} points", player_a.points());
-        println!("Dealer have {} points", dealer.points());
-        println!("Want more cards? (y,n)");
-        let mut input = String::new();
-        match io::stdin().read_line(&mut input) {
-            Ok(_n) => match input.trim() {
-                "y" => {
-                    deck.deal(player_a);
-                }
-                "n" => break,
-                _ => {
-                    continue;
-                }
-            },
-            Err(error) => println!("error: {}", error),
-        }
-        if player_a.points() > 21 {
-            println!("You have {} points", player_a.points());
-            println!("You busted!");
-            return;
-        }
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
     }
-    println!("======Dealer Getting Cards======");
-    while dealer.points() <= 16 {
-        deck.deal(dealer);
-        println!("Dealer have {} points", dealer.points());
-    }
-    println!("===========Result=============");
-    if dealer.points() > 21 {
-        println!("Dealer have {} points", dealer.points());
-        println!("You have {} points", player_a.points());
-        println!("You Won!");
-        return;
-    } else {
-        println!("You have {} points", player_a.points());
-        println!("Dealer have {} points", dealer.points());
-        match player_a.points() > dealer.points() {
-            true => println!("You Won!"),
-            false => println!("You Lost!"),
-        }
-    }
-    println!("=============================");
 }
